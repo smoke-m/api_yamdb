@@ -22,7 +22,7 @@ class Title(models.Model):
     """Модель Title."""
     name = models.CharField(max_length=256)
     year = models.IntegerField()
-    description = models.CharField(blank=True, null=True)
+    description = models.CharField(max_length=1024, blank=True, null=True)
     genre = models.ManyToManyField(Genre)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, blank=True, null=True)
 
