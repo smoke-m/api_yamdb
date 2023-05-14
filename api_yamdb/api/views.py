@@ -15,7 +15,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
     filter_backends = [DjangoFilterBackend]
-    permission_classes = [IsAdminUserOrReadOnly]
     filterset_class = TitleFilter
 
 
@@ -24,7 +23,6 @@ class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [IsAdminUserOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     lookup_field = 'slug'
@@ -35,7 +33,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = PageNumberPagination
-    permission_classes = [IsAdminUserOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     lookup_field = 'slug'
