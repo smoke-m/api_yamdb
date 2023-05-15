@@ -52,10 +52,7 @@ def signup(request):
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid()
     serializer.save
-    user = get_object_or_404(
-        User,
-        username=serializer.validated_data['username']
-    )
+    user = get_object_or_404(User)
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='Регистация.',
@@ -70,11 +67,8 @@ def signup(request):
 def authtoken(request):
     """Авторизация пользователя."""
     serializer = TokenSerializer(data=request.data)
-    serializer.is_valid
-    user = get_object_or_404(
-        User,
-        usernaem=serializer.validated_data['username']
-    )
+    serializer.is_valid()
+    user = get_object_or_404(User)
     if default_token_generator.check_token(
         user, serializer.validated_data['confirmation_code']
     ):
