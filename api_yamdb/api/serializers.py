@@ -38,6 +38,18 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ['slug']
 
 
+class SignUpSerializer(serializers.Serializer):
+    """Сериализер регистрации."""
+    email = serializers.EmailField()
+    username = serializers.CharField(max_length=150)
+
+
+class TokenSerializer(serializers.Serializer):
+    """Сериализер отправки токена."""
+    username = serializers.CharField(max_length=30)
+    confirmation_code = serializers.CharField(max_length=255)
+
+
 class ReviewsSerializer(serializers.ModelSerializer):
     """Сериализатор для отзыввов."""
     author = serializers.SlugRelatedField(
