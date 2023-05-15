@@ -8,11 +8,19 @@ from rest_framework.decorators import api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import AccessToken
 
+
 from reviews.models import Category, Genre, Title, User
 from .filters import TitleFilter
 # from .permissions import IsAdminUserOrReadOnly
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           SignUpSerializer, TokenSerializer)
+
+from reviews.models import Category, Genre, Reviews, Title
+from .filters import TitleFilter
+# from .permissions import IsAdminUserOrReadOnly
+from .serializers import (CategorySerializer, CommentsSerializer,
+                          GenreSerializer, ReviewsSerializer, TitleSerializer)
+
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -79,3 +87,35 @@ def authtoken(request):
         token = AccessToken.for_user(user)
         return Response({'token': str(token)}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ReviewsViewSet(viewsets.ModelViewSet):
+    """View отзывов."""
+    serializer_class = ReviewsSerializer
+
+    def get_title(self):
+        return get_object_or_404(Title, id=self.kwargs.get('title_id'))
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, title=self.get_title())
+
+    def get_queryset(self):
+        return self.get_title().reviews.all()
+
+
+class CommentsViewSet(viewsets.ModelViewSet):
+    """View комментариев."""
+    serializer_class = CommentsSerializer
+
+    def get_review(self):
+        return get_object_or_404(
+            Reviews,
+            id=self.kwargs.get('review_id'),
+            title_id=self.kwargs.get('title_id'),
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user, review=self.get_review())
+
+    def get_queryset(self):
+        return self.get_review().comments.all()
