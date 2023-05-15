@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from reviews.models import Category, Genre, Title
+
+from reviews.models import Category, Comments, Genre, Reviews, Title
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -47,3 +48,36 @@ class TokenSerializer(serializers.Serializer):
     """Сериализер отправки токена."""
     username = serializers.CharField(max_length=30)
     confirmation_code = serializers.CharField(max_length=255)
+
+
+class ReviewsSerializer(serializers.ModelSerializer):
+    """Сериализатор для отзыввов."""
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True)
+    score = serializers.IntegerField(max_value=10, min_value=1)
+
+    class Meta:
+        model = Reviews
+        fields = ['id', 'text', 'author', 'score', 'pub_date']
+        read_only = ['id']
+
+    def validate(self, data):
+        request = self.context['request']
+        title = self.context['view'].kwargs.get('title_id')
+        if request.method == 'POST':
+            if Reviews.objects.filter(author=request.user,
+                                      title=title).exists():
+                raise serializers.ValidationError(
+                    'Ваш отзыв уже есть.')
+        return data
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    """Сериализатор для комментарие."""
+    author = serializers.SlugRelatedField(
+        slug_field='username', read_only=True)
+
+    class Meta:
+        model = Comments
+        fields = ['id', 'text', 'author', 'pub_date']
+        read_only = ['id']
