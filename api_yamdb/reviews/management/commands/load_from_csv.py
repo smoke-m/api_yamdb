@@ -1,39 +1,40 @@
 import csv
+from pathlib import Path
 
-from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Comments, Genre, Reviews, Title, User
 
-CSV_FILES = {
-    Category: 'category.csv',
-    Genre: 'genre.csv',
-    Title: 'titles.csv',
-}
+CSV_PATH = Path('static', 'data')
+
+CSV_FILES = (
+    ('category.csv', Category, {}),
+    ('genre.csv', Genre, {}),
+    ('users.csv', User, {}),
+    ('titles.csv', Title, {'category': 'category_id'}),
+    ('genre_title.csv', Title.genre.through, {}),
+    ('review.csv', Reviews, {'author': 'author_id'}),
+    ('comments.csv', Comments, {'author': 'author_id'}),
+)
 
 
 class Command(BaseCommand):
 
     @transaction.atomic
-    def handle(self, *args, **options):
-        for model, csv_file in CSV_FILES.items():
-            with open(f'{settings.BASE_DIR}/static/data/{csv_file}',
-                      'r', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                obj = [model(**data) for data in reader]
+    def handle(self, *args, **kwargs):
+
+        for file, model, replace in CSV_FILES:
+            with open(Path(CSV_PATH, file), mode='r', encoding='utf8') as f:
+                reader = csv.DictReader(f)
+                obj = []
+                for row in reader:
+                    args = dict(**row)
+                    if replace:
+                        for old, new in replace.items():
+                            args[new] = args.pop(old)
+                    obj.append(model(**args))
                 model.objects.bulk_create(obj)
                 self.stdout.write(self.style.SUCCESS(
                     f'Модель {model.__name__} загружена.'
                 ))
-
-        with open(f'{settings.BASE_DIR}/static/data/genre_title.csv',
-                  'r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                try:
-                    title = Title.objects.get(pk=row['title_id'])
-                    genre = Genre.objects.get(pk=row['genre_id'])
-                    title.genre.add(genre)
-                except (Title.DoesNotExist, Genre.DoesNotExist) as e:
-                    self.stdout.write(self.style.WARNING(f"Ошибка: {e}"))
