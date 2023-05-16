@@ -12,9 +12,11 @@ class User(AbstractUser):
         ('moderator', 'модератор'),
         ('admin', 'админ'),
     ]
+    username = models.CharField(max_length=254, unique=True, blank=False)
     email = models.EmailField(max_length=254, unique=True)
     bio = models.TextField(blank=True)
     role = models.CharField(max_length=13, choices=ROLE, default='user')
+    confirmation_code = models.CharField(max_length=200)
 
     class Meta:
         constraints = [

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from reviews.models import Category, Comments, Genre, Reviews, Title
+from reviews.models import Category, Comments, Genre, Reviews, Title, User
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -36,6 +36,22 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['name', 'slug']
         read_only_fields = ['slug']
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+    """Сериализер регистрации."""
+    email = serializers.EmailField()
+    username = serializers.CharField(max_length=150)
+
+    class Meta:
+        fields = ('username', 'email')
+        model = User
+
+
+class TokenSerializer(serializers.Serializer):
+    """Сериализер отправки токена."""
+    username = serializers.CharField(max_length=30)
+    confirmation_code = serializers.CharField(max_length=255)
 
 
 class ReviewsSerializer(serializers.ModelSerializer):
