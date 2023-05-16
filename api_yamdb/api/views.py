@@ -11,7 +11,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Title, User, Reviews
 from .filters import TitleFilter
-# from .permissions import IsAdminUserOrReadOnly
+from .permissions import AuthorOrReadOnly
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
                           SignUpSerializer, TokenSerializer,
                           CommentsSerializer, ReviewsSerializer)
@@ -51,8 +51,9 @@ def signup(request):
     """Отправляет сообщение с кодом при регистрации."""
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid()
+    username = serializer.validated_data.get('username')
     serializer.save
-    user = get_object_or_404(User)
+    user = get_object_or_404(User, username=username)
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='Регистация.',
@@ -68,7 +69,8 @@ def authtoken(request):
     """Авторизация пользователя."""
     serializer = TokenSerializer(data=request.data)
     serializer.is_valid()
-    user = get_object_or_404(User)
+    username = serializer.validated_data['username']
+    user = get_object_or_404(User, username=username)
     if default_token_generator.check_token(
         user, serializer.validated_data['confirmation_code']
     ):
@@ -80,6 +82,7 @@ def authtoken(request):
 class ReviewsViewSet(viewsets.ModelViewSet):
     """View отзывов."""
     serializer_class = ReviewsSerializer
+    permission_classes = (AuthorOrReadOnly,)
 
     def get_title(self):
         return get_object_or_404(Title, id=self.kwargs['title_id'])
@@ -94,6 +97,7 @@ class ReviewsViewSet(viewsets.ModelViewSet):
 class CommentsViewSet(viewsets.ModelViewSet):
     """View комментариев."""
     serializer_class = CommentsSerializer
+    permission_classes = (AuthorOrReadOnly,)
 
     def get_review(self):
         return get_object_or_404(
