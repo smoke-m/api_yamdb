@@ -3,8 +3,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from rest_framework.response import Response
-from rest_framework import filters, viewsets, status
-from rest_framework.decorators import api_view
+from rest_framework import filters, viewsets, status, permissions
+from rest_framework.decorators import api_view, action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -13,7 +13,7 @@ from reviews.models import Category, Genre, Title, User, Reviews
 from .filters import TitleFilter
 from .permissions import AuthorOrReadOnly
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
-                          SignUpSerializer, TokenSerializer,
+                          SignUpSerializer, TokenSerializer, UserSerializer,
                           CommentsSerializer, ReviewsSerializer)
 
 
@@ -52,7 +52,10 @@ def signup(request):
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid()
     username = serializer.validated_data.get('username')
-    serializer.save
+    if User.objects.filter(username=username).exists():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        User.objects.create(**serializer.validated_data)
     user = get_object_or_404(User, username=username)
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
@@ -111,3 +114,32 @@ class CommentsViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.get_review().comments.all()
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """View UseroB."""
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+    pagination_class = PageNumberPagination
+    lookup_field = 'username'
+    filter_backends = (filters.SearchFilter, )
+    search_fields = ('username',)
+
+    @action(
+        methods=('get', 'patch'),
+        detail=False,
+        url_path='me',
+        permission_classes=(permissions.IsAuthenticated,),
+    )
+    def me(self, request):
+        serializer = UserSerializer(request.user,
+                                    data=request.data,
+                                    partial=True)
+        if request.user.role == 'admin' or request.user.role == 'moderator':
+            serializer.is_valid()
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer.is_valid()
+        serializer.save(role='user')
+        return Response(serializer.data, status=status.HTTP_200_OK)
