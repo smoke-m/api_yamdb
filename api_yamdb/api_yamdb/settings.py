@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 from pathlib import Path
 
@@ -115,6 +116,9 @@ REST_FRAMEWORK = {
     )
 }
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60)
+}
 # Email
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from reviews.models import Category, Comments, Genre, Reviews, Title, User
 
@@ -85,3 +86,17 @@ class CommentsSerializer(serializers.ModelSerializer):
         model = Comments
         fields = ['id', 'text', 'author', 'pub_date']
         read_only = ['id']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """Сериализер для создания User."""
+    username = serializers.CharField(required=True)
+    email = serializers.EmailField(
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+
+    class Meta:
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
+        model = User
