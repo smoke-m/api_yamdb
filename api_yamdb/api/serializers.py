@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Category, Comments, Genre, Reviews, Title, User
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -27,8 +27,7 @@ class GenreSerializer(serializers.ModelSerializer):
     """Сериализер модели Genre."""
     class Meta:
         model = Genre
-        fields = ['id', 'name', 'slug']
-        read_only_fields = ['id']
+        fields = ['name', 'slug']
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -36,7 +35,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name', 'slug']
-        read_only_fields = ['slug']
 
 
 class SignUpSerializer(serializers.ModelSerializer):
@@ -62,7 +60,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
     score = serializers.IntegerField(max_value=10, min_value=1)
 
     class Meta:
-        model = Reviews
+        model = Review
         fields = ['id', 'text', 'author', 'score', 'pub_date']
         read_only = ['id']
 
@@ -70,8 +68,8 @@ class ReviewsSerializer(serializers.ModelSerializer):
         request = self.context['request']
         title = self.context['view'].kwargs.get('title_id')
         if request.method == 'POST':
-            if Reviews.objects.filter(author=request.user,
-                                      title=title).exists():
+            if Review.objects.filter(author=request.user,
+                                     title=title).exists():
                 raise serializers.ValidationError(
                     'Ваш отзыв уже есть.')
         return data
@@ -83,7 +81,7 @@ class CommentsSerializer(serializers.ModelSerializer):
         slug_field='username', read_only=True)
 
     class Meta:
-        model = Comments
+        model = Comment
         fields = ['id', 'text', 'author', 'pub_date']
         read_only = ['id']
 

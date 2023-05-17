@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import AccessToken
 
 
-from reviews.models import Category, Genre, Title, User, Reviews
+from reviews.models import Category, Genre, Title, User, Review
 from .filters import TitleFilter
 from .permissions import AuthorOrReadOnly
 from .serializers import (CategorySerializer, GenreSerializer, TitleSerializer,
@@ -104,7 +104,7 @@ class CommentsViewSet(viewsets.ModelViewSet):
 
     def get_review(self):
         return get_object_or_404(
-            Reviews,
+            Review,
             id=self.kwargs['review_id'],
             title_id=self.kwargs['title_id'],
         )
