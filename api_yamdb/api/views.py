@@ -1,21 +1,21 @@
-from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, permissions, status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Review, Title, User
 
 from .filters import TitleFilter
-from .permissions import AuthorOrReadOnly, IsAdmin
+from .permissions import (AuthorOrReadOnly, IsAdmin, IsAdminOnly)
 from .serializers import (CategorySerializer, CommentsSerializer,
-                          GenreSerializer, ReviewsSerializer, SignUpSerializer,
-                          TitleSerializerRead, TitleSerializerWrite,
-                          TokenSerializer, UserSerializer)
+                          GenreSerializer, ReviewsSerializer,
+                          SignUpSerializer, TitleSerializerRead,
+                          TitleSerializerWrite, TokenSerializer,
+                          UserSerializer, ProfileSerializer)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -58,20 +58,21 @@ class CategoryViewSet(mixins.ListModelMixin,
 
 
 @api_view(["POST"])
+@permission_classes((permissions.AllowAny,))
 def signup(request):
     """Отправляет сообщение с кодом при регистрации."""
     serializer = SignUpSerializer(data=request.data)
-    serializer.is_valid()
-    username = serializer.validated_data.get('username')
-    if User.objects.filter(username=username).exists():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        User.objects.create(**serializer.validated_data)
-    user = get_object_or_404(User, username=username)
-    confirmation_code = default_token_generator.make_token(user)
+    username = request.data.get('username')
+    email = request.data.get('email')
+    if User.objects.filter(username=username, email=email):
+        user = User.objects.get(username=request.data.get('username'))
+        serializer = SignUpSerializer(user, data=request.data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    user = User.objects.get(username=request.data.get('username'))
     send_mail(
         subject='Регистация.',
-        message=f'Код подтверждения для токена:{confirmation_code}',
+        message=f'Код подтверждения для токена:{user.confirmation_code}',
         from_email=None,
         recipient_list=[user.email]
     )
@@ -79,15 +80,14 @@ def signup(request):
 
 
 @api_view(["POST"])
+@permission_classes((permissions.AllowAny,))
 def authtoken(request):
     """Авторизация пользователя."""
     serializer = TokenSerializer(data=request.data)
-    serializer.is_valid()
+    serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
     user = get_object_or_404(User, username=username)
-    if default_token_generator.check_token(
-        user, serializer.validated_data['confirmation_code']
-    ):
+    if str(user.confirmation_code) == request.data.get('confirmation_code'):
         token = AccessToken.for_user(user)
         return Response({'token': str(token)}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -131,25 +131,22 @@ class UserViewSet(viewsets.ModelViewSet):
     """View UseroB."""
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (IsAdminOnly, )
     lookup_field = 'username'
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
+    http_method_names = ('get', 'post', 'patch', 'delete')
 
     @action(
         methods=('get', 'patch'),
         detail=False,
         url_path='me',
         permission_classes=(permissions.IsAuthenticated,),
+        serializer_class=ProfileSerializer
     )
-    def me(self, request):
-        serializer = UserSerializer(request.user,
-                                    data=request.data,
-                                    partial=True)
-        if request.user.role == 'admin' or request.user.role == 'moderator':
-            serializer.is_valid()
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer.is_valid()
-        serializer.save(role='user')
+    def set_profile(self, request, pk=None):
+        user = get_object_or_404(User, pk=request.user.id)
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 from django.utils import timezone
+from django.contrib.auth.validators import UnicodeUsernameValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
@@ -65,9 +65,6 @@ class TitleSerializerWrite(serializers.ModelSerializer):
 
 class SignUpSerializer(serializers.ModelSerializer):
     """Сериализер регистрации."""
-    email = serializers.EmailField()
-    username = serializers.CharField(max_length=150)
-
     class Meta:
         fields = ('username', 'email')
         model = User
@@ -75,7 +72,8 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 class TokenSerializer(serializers.Serializer):
     """Сериализер отправки токена."""
-    username = serializers.CharField(max_length=30)
+    username = serializers.CharField(max_length=30,
+                                     validators=[UnicodeUsernameValidator, ])
     confirmation_code = serializers.CharField(max_length=255)
 
 
@@ -114,13 +112,14 @@ class CommentsSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Сериализер для создания User."""
-    username = serializers.CharField(required=True)
-    email = serializers.EmailField(
-        validators=[UniqueValidator(queryset=User.objects.all())]
-    )
 
     class Meta:
         fields = (
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
         )
         model = User
+
+
+class ProfileSerializer(UserSerializer):
+    """Серилизер для users/me"""
+    role = serializers.CharField(read_only=True)

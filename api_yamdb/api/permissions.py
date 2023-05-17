@@ -28,3 +28,11 @@ class IsAdmin(permissions.BasePermission):
     #     if request.user.is_authenticated:
     #         return bool(request.user.is_staff
     #                     or request.user.role == 'admin')
+
+
+class IsAdminOnly(permissions.BasePermission):
+    """Только для админа и суперюзера."""
+    def has_permission(self, request, view):
+        if request.user.is_authenticated:
+            return (request.user.role == 'admin' or request.user.is_superuser)
+        return False

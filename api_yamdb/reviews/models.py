@@ -1,8 +1,9 @@
+import uuid
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .validators import validate_year
+from .validators import validate_year, validate_username
 
 
 class User(AbstractUser):
@@ -12,11 +13,16 @@ class User(AbstractUser):
         ('moderator', 'модератор'),
         ('admin', 'админ'),
     ]
-    username = models.CharField(max_length=254, unique=True, blank=False)
-    email = models.EmailField(max_length=254, unique=True)
+    username = models.CharField(max_length=150, unique=True, blank=False,
+                                validators=(validate_username,),)
+    last_name = models.CharField(max_length=150, blank=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField(max_length=254, unique=True, blank=False,
+                              null=False)
     bio = models.TextField(blank=True)
     role = models.CharField(max_length=13, choices=ROLE, default='user')
-    confirmation_code = models.CharField(max_length=200)
+    confirmation_code = models.UUIDField(default=uuid.uuid4, editable=False,
+                                         unique=True)
 
     class Meta:
         constraints = [
