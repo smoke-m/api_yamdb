@@ -39,19 +39,22 @@ class Genre(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return self.name[:40]
+        return self.name
 
 
 class Category(models.Model):
     """Модель Category."""
     name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(
+        max_length=30,
+        unique=True,
+    )
 
     class Meta:
         ordering = ['name']
 
     def __str__(self):
-        return self.name[:40]
+        return self.name
 
 
 class Title(models.Model):
@@ -74,7 +77,7 @@ class Title(models.Model):
         return self.name[:40]
 
 
-class Reviews(models.Model):
+class Review(models.Model):
     """Модель отзывов с оценкой на произведение."""
     title = models.ForeignKey(
         Title,
@@ -90,8 +93,8 @@ class Reviews(models.Model):
     score = models.IntegerField(
         default=1,
         validators=[
-            MaxValueValidator(10, 'Не так много! 10 это max!'),
-            MinValueValidator(1, 'хоть 1 поставь')
+            MaxValueValidator(10),
+            MinValueValidator(1)
         ]
     )
     pub_date = models.DateTimeField(auto_now_add=True)
@@ -109,10 +112,10 @@ class Reviews(models.Model):
         return self.text[:40]
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     """Модель комментариев к отзывам."""
     review = models.ForeignKey(
-        Reviews,
+        Review,
         on_delete=models.CASCADE,
         related_name='comments',
     )
