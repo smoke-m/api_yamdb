@@ -35,6 +35,9 @@ class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True)
 
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 
@@ -47,6 +50,9 @@ class Category(models.Model):
         unique=True,
     )
 
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 
@@ -56,6 +62,7 @@ class Title(models.Model):
     name = models.CharField(max_length=256)
     year = models.IntegerField(validators=[validate_year])
     description = models.CharField(max_length=1024, blank=True)
+    rating = models.IntegerField(blank=True, null=True)
     genre = models.ManyToManyField(Genre, related_name='titles')
     category = models.ForeignKey(Category,
                                  on_delete=models.SET_NULL,
