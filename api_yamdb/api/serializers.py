@@ -45,7 +45,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name', 'slug']
-        read_only_fields = ['slug']
 
 
 class SignUpSerializer(serializers.ModelSerializer):
