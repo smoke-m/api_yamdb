@@ -5,7 +5,6 @@ from django.core.mail import send_mail
 from rest_framework.response import Response
 from rest_framework import filters, viewsets, status, permissions
 from rest_framework.decorators import api_view, action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import AccessToken
 
 
@@ -21,7 +20,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     """View модели Title."""
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    pagination_class = PageNumberPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter
 
@@ -30,7 +28,6 @@ class GenreViewSet(viewsets.ModelViewSet):
     """View модели Genre."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    pagination_class = PageNumberPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     lookup_field = 'slug'
@@ -40,7 +37,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
     """View модели Category."""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    pagination_class = PageNumberPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name']
     lookup_field = 'slug'
@@ -121,7 +117,6 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated, )
-    pagination_class = PageNumberPagination
     lookup_field = 'username'
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)

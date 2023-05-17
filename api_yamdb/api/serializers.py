@@ -4,20 +4,29 @@ from rest_framework.validators import UniqueValidator
 from reviews.models import Category, Comments, Genre, Reviews, Title, User
 
 
+class CategoryField(serializers.SlugRelatedField):
+    def to_representation(self, value):
+        serializer = CategorySerializer(value)
+        return serializer.data
+
+
+class GenreField(serializers.SlugRelatedField):
+    def to_representation(self, value):
+        serializer = GenreSerializer(value)
+        return serializer.data
+
+
 class TitleSerializer(serializers.ModelSerializer):
     """Сериализер модели Title."""
-    category = serializers.SlugRelatedField(slug_field='slug',
-                                            queryset=Category.objects.all(),
-                                            required=False)
-    genre = serializers.SlugRelatedField(slug_field='slug',
-                                         queryset=Genre.objects.all(),
-                                         many=True)
+    category = CategoryField(slug_field='slug', queryset=Category.objects.all(), required=False)
+    genre = GenreField(slug_field='slug', queryset=Genre.objects.all(), many=True)
 
     class Meta:
         model = Title
         fields = ['id',
                   'name',
                   'year',
+                  'rating',
                   'description',
                   'genre',
                   'category']
@@ -27,7 +36,7 @@ class GenreSerializer(serializers.ModelSerializer):
     """Сериализер модели Genre."""
     class Meta:
         model = Genre
-        fields = ['id', 'name', 'slug']
+        fields = ['name', 'slug']
         read_only_fields = ['id']
 
 
