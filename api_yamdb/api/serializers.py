@@ -1,35 +1,20 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from django.utils import timezone
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
-class CategoryField(serializers.SlugRelatedField):
-    def to_representation(self, value):
-        serializer = CategorySerializer(value)
-        return serializer.data
+# class CategoryField(serializers.SlugRelatedField):
+#     def to_representation(self, value):
+#         serializer = CategorySerializer(value)
+#         return serializer.data
 
 
-class GenreField(serializers.SlugRelatedField):
-    def to_representation(self, value):
-        serializer = GenreSerializer(value)
-        return serializer.data
-
-
-class TitleSerializer(serializers.ModelSerializer):
-    """Сериализер модели Title."""
-    category = CategoryField(slug_field='slug', queryset=Category.objects.all(), required=False)
-    genre = GenreField(slug_field='slug', queryset=Genre.objects.all(), many=True)
-
-    class Meta:
-        model = Title
-        fields = ['id',
-                  'name',
-                  'year',
-                  'rating',
-                  'description',
-                  'genre',
-                  'category']
+# class GenreField(serializers.SlugRelatedField):
+#     def to_representation(self, value):
+#         serializer = GenreSerializer(value)
+#         return serializer.data
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -37,6 +22,7 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ['name', 'slug']
+        lookup_field = 'slug'
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -44,6 +30,37 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name', 'slug']
+        lookup_field = 'slug'
+
+
+class TitleSerializerRead(serializers.ModelSerializer):
+    """Сериализер модели Title(Read)."""
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(read_only=True, many=True)
+    rating = serializers.IntegerField(
+        source='reviews__score__avg', read_only=True)
+
+    class Meta:
+        model = Title
+        fields = ['id', 'name', 'year', 'rating',
+                  'description', 'genre', 'category']
+
+
+class TitleSerializerWrite(serializers.ModelSerializer):
+    """Сериализер модели Title(Write)."""
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all())
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', many=True, queryset=Genre.objects.all())
+
+    class Meta:
+        fields = ['id', 'name', 'year', 'description', 'genre', 'category']
+        model = Title
+
+    def validate_year(self, value):
+        if value >= timezone.now().year:
+            raise serializers.ValidationError('Год указан не верно.')
+        return value
 
 
 class SignUpSerializer(serializers.ModelSerializer):

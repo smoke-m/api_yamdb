@@ -4,7 +4,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from reviews.models import Category, Comments, Genre, Reviews, Title, User
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 CSV_PATH = Path('static', 'data')
 
@@ -14,8 +14,8 @@ CSV_FILES = (
     ('users.csv', User, {}),
     ('titles.csv', Title, {'category': 'category_id'}),
     ('genre_title.csv', Title.genre.through, {}),
-    ('review.csv', Reviews, {'author': 'author_id'}),
-    ('comments.csv', Comments, {'author': 'author_id'}),
+    ('review.csv', Review, {'author': 'author_id'}),
+    ('comments.csv', Comment, {'author': 'author_id'}),
 )
 
 
