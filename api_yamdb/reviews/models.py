@@ -1,8 +1,10 @@
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .validators import validate_year
+from .validators import validate_username, validate_year
 
 
 class User(AbstractUser):
@@ -12,13 +14,19 @@ class User(AbstractUser):
         ('moderator', 'модератор'),
         ('admin', 'админ'),
     ]
-    username = models.CharField(max_length=254, unique=True, blank=False)
-    email = models.EmailField(max_length=254, unique=True)
+    username = models.CharField(max_length=150, unique=True, blank=False,
+                                validators=(validate_username,),)
+    last_name = models.CharField(max_length=150, blank=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField(max_length=254, unique=True, blank=False,
+                              null=False)
     bio = models.TextField(blank=True)
     role = models.CharField(max_length=13, choices=ROLE, default='user')
-    confirmation_code = models.CharField(max_length=200)
+    confirmation_code = models.UUIDField(default=uuid.uuid4, editable=False,
+                                         unique=True)
 
     class Meta:
+        ordering = ['-id']
         constraints = [
             models.UniqueConstraint(
                 fields=['username', 'email'],
@@ -35,17 +43,26 @@ class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True)
 
+    class Meta:
+        ordering = ['-id']
+
     def __str__(self):
-        return self.name[:40]
+        return self.name[:10]
 
 
 class Category(models.Model):
     """Модель Category."""
     name = models.CharField(max_length=256)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(
+        max_length=30,
+        unique=True,
+    )
+
+    class Meta:
+        ordering = ['-id']
 
     def __str__(self):
-        return self.name[:40]
+        return self.name[:10]
 
 
 class Title(models.Model):
@@ -53,6 +70,7 @@ class Title(models.Model):
     name = models.CharField(max_length=256)
     year = models.IntegerField(validators=[validate_year])
     description = models.CharField(max_length=1024, blank=True)
+    rating = models.IntegerField(blank=True, null=True)
     genre = models.ManyToManyField(Genre, related_name='titles')
     category = models.ForeignKey(Category,
                                  on_delete=models.SET_NULL,
@@ -61,13 +79,13 @@ class Title(models.Model):
                                  related_name='titles')
 
     class Meta:
-        ordering = ['year']
+        ordering = ['-id']
 
     def __str__(self):
-        return self.name[:40]
+        return self.name[:10]
 
 
-class Reviews(models.Model):
+class Review(models.Model):
     """Модель отзывов с оценкой на произведение."""
     title = models.ForeignKey(
         Title,
@@ -83,8 +101,8 @@ class Reviews(models.Model):
     score = models.IntegerField(
         default=1,
         validators=[
-            MaxValueValidator(10, 'Не так много! 10 это max!'),
-            MinValueValidator(1, 'хоть 1 поставь')
+            MaxValueValidator(10),
+            MinValueValidator(1)
         ]
     )
     pub_date = models.DateTimeField(auto_now_add=True)
@@ -96,16 +114,16 @@ class Reviews(models.Model):
                 name='unique_author_title'
             )
         ]
-        ordering = ['-pub_date']
+        ordering = ['-id']
 
     def __str__(self):
-        return self.text[:40]
+        return self.text[:10]
 
 
-class Comments(models.Model):
+class Comment(models.Model):
     """Модель комментариев к отзывам."""
     review = models.ForeignKey(
-        Reviews,
+        Review,
         on_delete=models.CASCADE,
         related_name='comments',
     )
@@ -118,7 +136,7 @@ class Comments(models.Model):
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-pub_date']
+        ordering = ['-id']
 
     def __str__(self):
-        return self.text[:40]
+        return self.text[:10]
