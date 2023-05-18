@@ -1,9 +1,10 @@
 import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .validators import validate_year, validate_username
+from .validators import validate_username, validate_year
 
 
 class User(AbstractUser):
@@ -25,6 +26,7 @@ class User(AbstractUser):
                                          unique=True)
 
     class Meta:
+        ordering = ['-id']
         constraints = [
             models.UniqueConstraint(
                 fields=['username', 'email'],
@@ -42,10 +44,10 @@ class Genre(models.Model):
     slug = models.SlugField(unique=True)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['-id']
 
     def __str__(self):
-        return self.name
+        return self.name[:10]
 
 
 class Category(models.Model):
@@ -57,10 +59,10 @@ class Category(models.Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ['-id']
 
     def __str__(self):
-        return self.name
+        return self.name[:10]
 
 
 class Title(models.Model):
@@ -77,10 +79,10 @@ class Title(models.Model):
                                  related_name='titles')
 
     class Meta:
-        ordering = ['year']
+        ordering = ['-id']
 
     def __str__(self):
-        return self.name[:40]
+        return self.name[:10]
 
 
 class Review(models.Model):
@@ -112,10 +114,10 @@ class Review(models.Model):
                 name='unique_author_title'
             )
         ]
-        ordering = ['-pub_date']
+        ordering = ['-id']
 
     def __str__(self):
-        return self.text[:40]
+        return self.text[:10]
 
 
 class Comment(models.Model):
@@ -134,7 +136,7 @@ class Comment(models.Model):
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-pub_date']
+        ordering = ['-id']
 
     def __str__(self):
-        return self.text[:40]
+        return self.text[:10]

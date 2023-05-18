@@ -10,17 +10,18 @@ from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Genre, Review, Title, User
 
 from .filters import TitleFilter
-from .permissions import (AuthorOrReadOnly, IsAdmin, IsAdminOnly)
+from .permissions import AuthorOrReadOnly, IsAdmin, IsAdminOnly
 from .serializers import (CategorySerializer, CommentsSerializer,
-                          GenreSerializer, ReviewsSerializer,
-                          SignUpSerializer, TitleSerializerRead,
-                          TitleSerializerWrite, TokenSerializer,
-                          UserSerializer, ProfileSerializer)
+                          GenreSerializer, ProfileSerializer,
+                          ReviewsSerializer, SignUpSerializer,
+                          TitleSerializerRead, TitleSerializerWrite,
+                          TokenSerializer, UserSerializer)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     """View модели Title."""
-    queryset = Title.objects.all().annotate(Avg('reviews__score'))
+    queryset = Title.objects.all().annotate(
+        Avg('reviews__score')).order_by('-id')
     permission_classes = [IsAdmin]
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter

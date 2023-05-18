@@ -24,10 +24,6 @@ class IsAdmin(permissions.BasePermission):
             and request.user.role == 'admin'
             or request.user.is_superuser
         )
-    # def has_permission(self, request, view):
-    #     if request.user.is_authenticated:
-    #         return bool(request.user.is_staff
-    #                     or request.user.role == 'admin')
 
 
 class IsAdminOnly(permissions.BasePermission):

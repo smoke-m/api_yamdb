@@ -1,20 +1,8 @@
-from rest_framework import serializers
-from django.utils import timezone
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.utils import timezone
+from rest_framework import serializers
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
-
-
-# class CategoryField(serializers.SlugRelatedField):
-#     def to_representation(self, value):
-#         serializer = CategorySerializer(value)
-#         return serializer.data
-
-
-# class GenreField(serializers.SlugRelatedField):
-#     def to_representation(self, value):
-#         serializer = GenreSerializer(value)
-#         return serializer.data
 
 
 class GenreSerializer(serializers.ModelSerializer):
