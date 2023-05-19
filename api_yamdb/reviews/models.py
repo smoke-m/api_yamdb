@@ -1,11 +1,10 @@
-import uuid
-
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import (MaxValueValidator, MinValueValidator,
+                                    RegexValidator)
 from django.db import models
 
-from .validators import validate_username, validate_year
+from .validators import validate_year, validate_username
 
 
 class User(AbstractUser):
@@ -18,16 +17,16 @@ class User(AbstractUser):
         (MODERATOR, 'модератор'),
         (ADMIN, 'админ'),
     ]
-    username = models.CharField(max_length=settings.MAX128, unique=True,
-                                validators=(validate_username,),)
+    username = models.CharField(
+        max_length=settings.MAX128, unique=True,
+        validators=(RegexValidator(r'^[\w.@+-]+\Z'), validate_username),
+    )
     last_name = models.CharField(max_length=settings.MAX128, blank=True)
     first_name = models.CharField(max_length=settings.MAX128, blank=True)
     email = models.EmailField(max_length=settings.MAX128, unique=True,
                               blank=False, null=False)
     bio = models.TextField(blank=True)
     role = models.CharField(max_length=13, choices=ROLE, default=USER)
-    confirmation_code = models.UUIDField(default=uuid.uuid4, editable=False,
-                                         unique=True)
 
     class Meta:
         ordering = ['-id']

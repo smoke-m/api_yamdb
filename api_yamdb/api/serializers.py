@@ -1,4 +1,3 @@
-from django.contrib.auth.validators import UnicodeUsernameValidator
 from rest_framework import serializers
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
@@ -56,9 +55,8 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 class TokenSerializer(serializers.Serializer):
     """Сериализер отправки токена."""
-    username = serializers.CharField(max_length=30,
-                                     validators=[UnicodeUsernameValidator, ])
-    confirmation_code = serializers.CharField(max_length=255)
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
 
 
 class ReviewsSerializer(serializers.ModelSerializer):
@@ -102,8 +100,3 @@ class UserSerializer(serializers.ModelSerializer):
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
         )
         model = User
-
-
-class ProfileSerializer(UserSerializer):
-    """Серилизер для users/me"""
-    role = serializers.CharField(read_only=True)
