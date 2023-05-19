@@ -1,8 +1,8 @@
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.utils import timezone
 from rest_framework import serializers
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
+from reviews.validators import validate_year
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -40,15 +40,11 @@ class TitleSerializerWrite(serializers.ModelSerializer):
         slug_field='slug', queryset=Category.objects.all())
     genre = serializers.SlugRelatedField(
         slug_field='slug', many=True, queryset=Genre.objects.all())
+    year = serializers.IntegerField(validators=[validate_year])
 
     class Meta:
         fields = ['id', 'name', 'year', 'description', 'genre', 'category']
         model = Title
-
-    def validate_year(self, value):
-        if value >= timezone.now().year:
-            raise serializers.ValidationError('Год указан не верно.')
-        return value
 
 
 class SignUpSerializer(serializers.ModelSerializer):
