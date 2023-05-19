@@ -5,9 +5,8 @@ from django.utils import timezone
 
 
 def validate_year(value):
-    current = timezone.now().year
-    if value > current:
-        raise ValidationError(f"Год не может быть больше текущего ({current})")
+    if value >= timezone.now().year:
+        raise ValidationError('Год указан не верно.')
 
 
 def validate_username(value):

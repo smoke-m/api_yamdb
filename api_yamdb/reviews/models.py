@@ -38,6 +38,14 @@ class User(AbstractUser):
             )
         ]
 
+    @property
+    def is_admin(self):
+        return self.role == self.ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == self.MODERATOR
+
     def __str__(self):
         return f'{self.username} {self.email} {self.role}'
 

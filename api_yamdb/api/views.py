@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Review, Title, User
-
 from .filters import TitleFilter
 from .permissions import AuthorOrReadOnly, IsAdmin, IsAdminOnly
 from .serializers import (CategorySerializer, CommentsSerializer,
@@ -32,10 +31,15 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSerializerWrite
 
 
-class GenreViewSet(mixins.ListModelMixin,
-                   mixins.CreateModelMixin,
-                   mixins.DestroyModelMixin,
-                   viewsets.GenericViewSet):
+class GenreCategoryMixinsSet(
+    mixins.ListModelMixin, mixins.CreateModelMixin,
+    mixins.DestroyModelMixin, viewsets.GenericViewSet
+):
+    """Сет миксинов для: Genre, Category."""
+    pass
+
+
+class GenreViewSet(GenreCategoryMixinsSet):
     """View модели Genre."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -45,10 +49,7 @@ class GenreViewSet(mixins.ListModelMixin,
     lookup_field = 'slug'
 
 
-class CategoryViewSet(mixins.ListModelMixin,
-                      mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin,
-                      viewsets.GenericViewSet):
+class CategoryViewSet(GenreCategoryMixinsSet):
     """View модели Category."""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
