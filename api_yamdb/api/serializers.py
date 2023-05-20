@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
-from reviews.validators import validate_year
+from reviews.validators import validate_year, max_min_validator
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -63,7 +63,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
     """Сериализатор для отзыввов."""
     author = serializers.SlugRelatedField(
         slug_field='username', read_only=True)
-    score = serializers.IntegerField(max_value=10, min_value=1)
+    score = serializers.IntegerField(validators=max_min_validator())
 
     class Meta:
         model = Review

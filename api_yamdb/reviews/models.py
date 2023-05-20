@@ -1,10 +1,9 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import (MaxValueValidator, MinValueValidator,
-                                    RegexValidator)
+from django.core.validators import RegexValidator
 from django.db import models
 
-from .validators import validate_year, validate_username
+from .validators import validate_username, validate_year, max_min_validator
 
 
 class User(AbstractUser):
@@ -118,10 +117,7 @@ class Review(BaseModelCommentReview):
     )
     score = models.PositiveSmallIntegerField(
         default=1,
-        validators=[
-            MaxValueValidator(10),
-            MinValueValidator(1)
-        ]
+        validators=max_min_validator()
     )
 
     class Meta:
