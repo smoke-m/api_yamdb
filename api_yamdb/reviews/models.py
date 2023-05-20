@@ -2,10 +2,9 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .validators import validate_username, validate_year
+from .validators import validate_username, validate_year, max_min_validator
 
 
 class User(AbstractUser):
@@ -119,10 +118,7 @@ class Review(BaseModelCommentReview):
     )
     score = models.PositiveSmallIntegerField(
         default=1,
-        validators=[
-            MaxValueValidator(10),
-            MinValueValidator(1)
-        ]
+        validators=max_min_validator()
     )
 
     class Meta:
