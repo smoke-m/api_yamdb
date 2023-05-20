@@ -6,7 +6,7 @@ from django.db import transaction
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 
-CSV_PATH = Path('static', 'data')
+CSV_PAT = Path('static', 'data')
 
 CSV_FILES = (
     ('category.csv', Category, {}),
@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
         for file, model, replace in CSV_FILES:
             try:
-                with open(Path(CSV_PATH, file), mode='r', encoding='utf8') as f:
+                with open(Path(CSV_PAT, file), mode='r', encoding='utf8') as f:
                     reader = csv.DictReader(f)
                     obj = []
                     for row in reader:
