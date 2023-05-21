@@ -1,3 +1,4 @@
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
@@ -8,11 +9,10 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Review, Title, User
-
 from .filters import TitleFilter
 from .permissions import AuthorOrReadOnly, IsAdmin, IsAdminOnly
 from .serializers import (CategorySerializer, CommentsSerializer,
-                          GenreSerializer, ProfileSerializer,
+                          GenreSerializer,
                           ReviewsSerializer, SignUpSerializer,
                           TitleSerializerRead, TitleSerializerWrite,
                           TokenSerializer, UserSerializer)
@@ -32,10 +32,15 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSerializerWrite
 
 
-class GenreViewSet(mixins.ListModelMixin,
-                   mixins.CreateModelMixin,
-                   mixins.DestroyModelMixin,
-                   viewsets.GenericViewSet):
+class GenreCategoryMixinsSet(
+    mixins.ListModelMixin, mixins.CreateModelMixin,
+    mixins.DestroyModelMixin, viewsets.GenericViewSet
+):
+    """Сет миксинов для: Genre, Category."""
+    pass
+
+
+class GenreViewSet(GenreCategoryMixinsSet):
     """View модели Genre."""
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -45,10 +50,7 @@ class GenreViewSet(mixins.ListModelMixin,
     lookup_field = 'slug'
 
 
-class CategoryViewSet(mixins.ListModelMixin,
-                      mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin,
-                      viewsets.GenericViewSet):
+class CategoryViewSet(GenreCategoryMixinsSet):
     """View модели Category."""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -63,19 +65,20 @@ class CategoryViewSet(mixins.ListModelMixin,
 def signup(request):
     """Отправляет сообщение с кодом при регистрации."""
     serializer = SignUpSerializer(data=request.data)
-    username = request.data.get('username')
-    email = request.data.get('email')
-    if User.objects.filter(username=username, email=email):
+    if User.objects.filter(
+        username=request.data.get('username'),
+        email=request.data.get('email')
+    ):
         user = User.objects.get(username=request.data.get('username'))
         serializer = SignUpSerializer(user, data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
-    user = User.objects.get(username=request.data.get('username'))
+    confirmation_code = default_token_generator.make_token(serializer.instance)
     send_mail(
-        subject='Регистация.',
-        message=f'Код подтверждения для токена:{user.confirmation_code}',
+        subject='Регистрация.',
+        message=f'Код подтверждения для токена: {confirmation_code}',
         from_email=None,
-        recipient_list=[user.email]
+        recipient_list=[serializer.instance.email]
     )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -88,7 +91,9 @@ def authtoken(request):
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']
     user = get_object_or_404(User, username=username)
-    if str(user.confirmation_code) == request.data.get('confirmation_code'):
+    if default_token_generator.check_token(
+        user, serializer.validated_data["confirmation_code"]
+    ):
         token = AccessToken.for_user(user)
         return Response({'token': str(token)}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -143,11 +148,15 @@ class UserViewSet(viewsets.ModelViewSet):
         detail=False,
         url_path='me',
         permission_classes=(permissions.IsAuthenticated,),
-        serializer_class=ProfileSerializer
     )
-    def set_profile(self, request, pk=None):
-        user = get_object_or_404(User, pk=request.user.id)
-        serializer = self.get_serializer(user, data=request.data, partial=True)
+    def me(self, request, pk=None):
+        serializer = UserSerializer(request.user,
+                                    data=request.data,
+                                    partial=True)
+        if request.user.is_admin or request.user.is_moderator:
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(role='user')
         return Response(serializer.data, status=status.HTTP_200_OK)

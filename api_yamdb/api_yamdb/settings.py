@@ -128,3 +128,9 @@ SIMPLE_JWT = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+
+# Constant
+
+MAX128 = 128
+MAX32 = 32
+MAX255 = 255
