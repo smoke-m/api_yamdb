@@ -65,10 +65,11 @@ class CategoryViewSet(GenreCategoryMixinsSet):
 def signup(request):
     """Отправляет сообщение с кодом при регистрации."""
     serializer = SignUpSerializer(data=request.data)
-    username = request.data.get('username')
-    email = request.data.get('email')
-    if User.objects.filter(username=username, email=email):
-        user, created = User.objects.get_or_create(username=username)
+    if User.objects.filter(
+        username=request.data.get('username'),
+        email=request.data.get('email')
+    ):
+        user = User.objects.get(username=request.data.get('username'))
         serializer = SignUpSerializer(user, data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
