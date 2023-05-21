@@ -102,20 +102,15 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
 
 
-# class SignUpSerializer(serializers.ModelSerializer):
-#     """Сериализер регистрации."""
-#     email = serializers.EmailField(
-#         required=True,
-#         validators=[UniqueValidator(queryset=User.objects.all())]
-#     )
+class SignSerializer(serializers.ModelSerializer):
 
-#     def validate_email(self, value):
-#         # Проверяем, существует ли уже пользователь с таким email
-#         if User.objects.filter(email=value).exists():
-#             raise serializers.ValidationError(
-#                 'Пользователь с таким email уже существует.')
-#         return value
+    def validate_email(self, value):
+        # Проверяем, существует ли уже пользователь с таким email
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                'Пользователь с таким email уже существует.')
+        return value
 
-#     class Meta:
-#         fields = ('username', 'email')
-#         model = User
+    class Meta:
+        fields = ('username', 'email')
+        model = User
