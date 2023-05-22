@@ -1,7 +1,9 @@
+from django.conf import settings
 from rest_framework import serializers
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
-from reviews.validators import validate_year, max_min_validator
+from reviews.validators import (max_min_validator, validate_username,
+                                validate_year)
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -44,13 +46,6 @@ class TitleSerializerWrite(serializers.ModelSerializer):
     class Meta:
         fields = ['id', 'name', 'year', 'description', 'genre', 'category']
         model = Title
-
-
-class SignUpSerializer(serializers.ModelSerializer):
-    """Сериализер регистрации."""
-    class Meta:
-        fields = ('username', 'email')
-        model = User
 
 
 class TokenSerializer(serializers.Serializer):
@@ -100,3 +95,16 @@ class UserSerializer(serializers.ModelSerializer):
             'username', 'email', 'first_name', 'last_name', 'bio', 'role'
         )
         model = User
+
+
+class SignUpSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        max_length=settings.MAX128,
+        required=True
+    )
+    username = serializers.RegexField(
+        max_length=settings.MAX128,
+        required=True,
+        regex=r'^[\w.@+-]+\Z',
+        validators=[validate_username]
+    )

@@ -1,9 +1,11 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db import IntegrityError
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import (filters, mixins, permissions, serializers, status,
+                            viewsets)
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
@@ -12,8 +14,7 @@ from reviews.models import Category, Genre, Review, Title, User
 from .filters import TitleFilter
 from .permissions import AuthorOrReadOnly, IsAdmin, IsAdminOnly
 from .serializers import (CategorySerializer, CommentsSerializer,
-                          GenreSerializer,
-                          ReviewsSerializer, SignUpSerializer,
+                          GenreSerializer, ReviewsSerializer, SignUpSerializer,
                           TitleSerializerRead, TitleSerializerWrite,
                           TokenSerializer, UserSerializer)
 
@@ -65,20 +66,20 @@ class CategoryViewSet(GenreCategoryMixinsSet):
 def signup(request):
     """Отправляет сообщение с кодом при регистрации."""
     serializer = SignUpSerializer(data=request.data)
-    if User.objects.filter(
-        username=request.data.get('username'),
-        email=request.data.get('email')
-    ):
-        user = User.objects.get(username=request.data.get('username'))
-        serializer = SignUpSerializer(user, data=request.data)
     serializer.is_valid(raise_exception=True)
-    serializer.save()
-    confirmation_code = default_token_generator.make_token(serializer.instance)
+    try:
+        user, created = User.objects.get_or_create(
+            username=request.data.get('username'),
+            email=request.data.get('email'))
+    except IntegrityError:
+        raise serializers.ValidationError(
+            'Пользователь с таким email уже существует.')
+    confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='Регистрация.',
         message=f'Код подтверждения для токена: {confirmation_code}',
         from_email=None,
-        recipient_list=[serializer.instance.email]
+        recipient_list=[user.email]
     )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
