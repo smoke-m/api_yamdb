@@ -66,6 +66,8 @@ class CategoryViewSet(GenreCategoryMixinsSet):
 @permission_classes((permissions.AllowAny,))
 def signup(request):
     """Отправляет сообщение с кодом при регистрации."""
+    serializer = SignUpSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
     try:
         user, created = User.objects.get_or_create(
             username=request.data.get('username'),
@@ -73,9 +75,6 @@ def signup(request):
     except IntegrityError:
         raise serializers.ValidationError(
             'Пользователь с таким email уже существует.')
-    serializer = SignUpSerializer(user, data=request.data)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
         subject='Регистация.',
