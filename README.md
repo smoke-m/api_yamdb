@@ -579,3 +579,4 @@
 Copyright (c) 2023 
 
 [Владислав Бабаян](https://github.com/doberman-ghost) **|** [Михаил Миноцкий](https://github.com/smoke-m) **|** [Магомет Басханов](https://github.com/MAGFRG)
+

@@ -77,8 +77,8 @@ def signup(request):
             'Пользователь с таким email уже существует.')
     confirmation_code = default_token_generator.make_token(user)
     send_mail(
-        subject='Регистация.',
-        message=f'Код подтверждения для токена:{confirmation_code}',
+        subject='Регистрация.',
+        message=f'Код подтверждения для токена: {confirmation_code}',
         from_email=None,
         recipient_list=[user.email]
     )
