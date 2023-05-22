@@ -1,9 +1,11 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db import IntegrityError
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, mixins, permissions, status, viewsets
+from rest_framework import (filters, mixins, permissions,
+                            serializers, status, viewsets)
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
@@ -64,9 +66,13 @@ class CategoryViewSet(GenreCategoryMixinsSet):
 @permission_classes((permissions.AllowAny,))
 def signup(request):
     """Отправляет сообщение с кодом при регистрации."""
-    user, created = User.objects.get_or_create(
-        username=request.data.get('username'),
-        email=request.data.get('email'))
+    try:
+        user, created = User.objects.get_or_create(
+            username=request.data.get('username'),
+            email=request.data.get('email'))
+    except IntegrityError:
+        raise serializers.ValidationError(
+            'Пользователь с таким email уже существует.')
     serializer = SignUpSerializer(user, data=request.data)
     serializer.is_valid(raise_exception=True)
     serializer.save()
