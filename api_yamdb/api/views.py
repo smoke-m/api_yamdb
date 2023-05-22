@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Review, Title, User
 from .filters import TitleFilter
-from .permissions import AuthorOrReadOnly, IsAdmin, IsAdminOnly
+from .permissions import AuthorOrReadOnly, IsAdmin
 from .serializers import (CategorySerializer, CommentsSerializer,
                           GenreSerializer, ReviewsSerializer, SignUpSerializer,
                           TitleSerializerRead, TitleSerializerWrite,
@@ -138,7 +138,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """View UseroB."""
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAdminOnly, )
+    permission_classes = (IsAdmin, permissions.IsAuthenticated)
     lookup_field = 'username'
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
@@ -151,13 +151,11 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def me(self, request, pk=None):
-        serializer = UserSerializer(request.user,
-                                    data=request.data,
-                                    partial=True)
-        if request.user.is_admin or request.user.is_moderator:
+        serializer = UserSerializer(request.user)
+        if request.method == 'PATCH':
+            serializer = UserSerializer(request.user,
+                                        data=request.data,
+                                        partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(role='user')
+            serializer.save(role=request.user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
