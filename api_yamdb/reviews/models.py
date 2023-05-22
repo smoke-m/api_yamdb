@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 
-from .validators import validate_username, validate_year, max_min_validator
+from .validators import max_min_validator, validate_username, validate_year
 
 
 class User(AbstractUser):
