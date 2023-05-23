@@ -4,15 +4,15 @@ from django.db import IntegrityError
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import (filters, mixins, permissions, serializers, status,
-                            viewsets)
+from rest_framework import filters, permissions, serializers, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Category, Genre, Review, Title, User
 from .filters import TitleFilter
-from .permissions import AuthorOrReadOnly, IsAdmin, IsAdminOnly
+from .mixins import GenreCategoryMixinsSet
+from .permissions import AuthorOrReadOnly, IsAdmin
 from .serializers import (CategorySerializer, CommentsSerializer,
                           GenreSerializer, ReviewsSerializer, SignUpSerializer,
                           TitleSerializerRead, TitleSerializerWrite,
@@ -31,14 +31,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.action in ('list', 'retrieve'):
             return TitleSerializerRead
         return TitleSerializerWrite
-
-
-class GenreCategoryMixinsSet(
-    mixins.ListModelMixin, mixins.CreateModelMixin,
-    mixins.DestroyModelMixin, viewsets.GenericViewSet
-):
-    """Сет миксинов для: Genre, Category."""
-    pass
 
 
 class GenreViewSet(GenreCategoryMixinsSet):
@@ -68,9 +60,7 @@ def signup(request):
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     try:
-        user, created = User.objects.get_or_create(
-            username=request.data.get('username'),
-            email=request.data.get('email'))
+        user, _ = User.objects.get_or_create(**serializer.validated_data)
     except IntegrityError:
         raise serializers.ValidationError(
             'Пользователь с таким email уже существует.')
@@ -138,7 +128,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """View UseroB."""
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAdminOnly, )
+    permission_classes = (IsAdmin, permissions.IsAuthenticated)
     lookup_field = 'username'
     filter_backends = (filters.SearchFilter, )
     search_fields = ('username',)
@@ -151,13 +141,10 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def me(self, request, pk=None):
-        serializer = UserSerializer(request.user,
-                                    data=request.data,
-                                    partial=True)
-        if request.user.is_admin or request.user.is_moderator:
+        serializer = UserSerializer(request.user)
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(role='user')
+            serializer.save(role=request.user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
