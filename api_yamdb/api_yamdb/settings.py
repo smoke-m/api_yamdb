@@ -129,8 +129,13 @@ SIMPLE_JWT = {
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
-# Constant
+# User global constants
 
-MAX128 = 128
-MAX32 = 32
-MAX255 = 255
+DESCRIPTION_LENGTH = 255
+EMAIL_LENGTH = 128
+FIRST_NAME_LENGTH = 128
+LAST_NAME_LENGTH = 128
+NAME_LENGTH = 32
+ROLE_LENGTH = 13
+SLAG_LENGTH = 32
+USERNAME_LENGTH = 128

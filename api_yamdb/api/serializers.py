@@ -99,11 +99,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 class SignUpSerializer(serializers.Serializer):
     email = serializers.EmailField(
-        max_length=settings.MAX128,
+        max_length=settings.EMAIL_LENGTH,
         required=True
     )
     username = serializers.RegexField(
-        max_length=settings.MAX128,
+        max_length=settings.USERNAME_LENGTH,
         required=True,
         regex=r'^[\w.@+-]+\Z',
         validators=[validate_username]

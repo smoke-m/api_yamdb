@@ -17,16 +17,19 @@ class User(AbstractUser):
         (ADMIN, 'админ'),
     ]
     username = models.CharField(
-        max_length=settings.MAX128, unique=True,
+        max_length=settings.USERNAME_LENGTH, unique=True,
         validators=(validate_username,
                     UnicodeUsernameValidator(regex=(r'^[\w.@+-]+\Z')))
     )
-    last_name = models.CharField(max_length=settings.MAX128, blank=True)
-    first_name = models.CharField(max_length=settings.MAX128, blank=True)
-    email = models.EmailField(max_length=settings.MAX128, unique=True,
+    last_name = models.CharField(
+        max_length=settings.LAST_NAME_LENGTH, blank=True)
+    first_name = models.CharField(
+        max_length=settings.FIRST_NAME_LENGTH, blank=True)
+    email = models.EmailField(max_length=settings.EMAIL_LENGTH, unique=True,
                               blank=False, null=False)
     bio = models.TextField(blank=True)
-    role = models.CharField(max_length=13, choices=ROLE, default=USER)
+    role = models.CharField(max_length=settings.ROLE_LENGTH,
+                            choices=ROLE, default=USER)
 
     class Meta:
         ordering = ['-id']
@@ -51,8 +54,8 @@ class User(AbstractUser):
 
 class BaseModelGenreCategory(models.Model):
     """Базовая модель для: Genre, Category."""
-    name = models.CharField(max_length=settings.MAX32)
-    slug = models.SlugField(max_length=settings.MAX32, unique=True)
+    name = models.CharField(max_length=settings.NAME_LENGTH)
+    slug = models.SlugField(max_length=settings.SLAG_LENGTH, unique=True)
 
     class Meta:
         abstract = True
@@ -75,15 +78,14 @@ class Category(BaseModelGenreCategory):
 
 class Title(models.Model):
     """Модель Title."""
-    name = models.CharField(max_length=settings.MAX32)
+    name = models.CharField(max_length=settings.NAME_LENGTH)
     year = models.PositiveSmallIntegerField(validators=[validate_year])
-    description = models.CharField(max_length=settings.MAX255, blank=True)
+    description = models.CharField(
+        max_length=settings.DESCRIPTION_LENGTH, blank=True)
     genre = models.ManyToManyField(Genre, related_name='titles')
-    category = models.ForeignKey(Category,
-                                 on_delete=models.SET_NULL,
-                                 blank=True,
-                                 null=True,
-                                 related_name='titles')
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL,
+        blank=True, null=True, related_name='titles')
 
     class Meta:
         ordering = ['-id']
@@ -96,6 +98,10 @@ class BaseModelCommentReview(models.Model):
     """Базовая модель для: Comment, Review."""
     text = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
 
     class Meta:
         abstract = True
@@ -109,12 +115,6 @@ class Review(BaseModelCommentReview):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        related_name='reviews',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='reviews',
     )
     score = models.PositiveSmallIntegerField(
         default=1,
@@ -122,6 +122,7 @@ class Review(BaseModelCommentReview):
     )
 
     class Meta:
+        default_related_name = 'reviews'
         constraints = [
             models.UniqueConstraint(
                 fields=['author', 'title'],
@@ -136,13 +137,8 @@ class Comment(BaseModelCommentReview):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
-        related_name='comments',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='comments',
     )
 
     class Meta:
+        default_related_name = 'comments'
         ordering = ['-id']
