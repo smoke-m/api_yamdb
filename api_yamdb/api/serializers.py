@@ -82,6 +82,7 @@ class ReviewsSerializer(serializers.ModelSerializer):
             )
         ]
 
+    # оставил чобы помнить альтернативу.
     # def validate(self, data):
     #     request = self.context['request']
     #     title = self.context['view'].kwargs.get('title_id')
