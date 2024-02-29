@@ -1,6 +1,8 @@
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+from django.db.models import Avg
+# from django.shortcuts import get_object_or_404
 
 from reviews.models import Category, Comment, Genre, Review, Title, User
 from reviews.validators import (max_min_validator, validate_username,
@@ -27,8 +29,14 @@ class TitleSerializerRead(serializers.ModelSerializer):
     """Сериализер модели Title(Read)."""
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
-    rating = serializers.IntegerField(
-        source='reviews__score__avg', read_only=True)
+    # rating = serializers.IntegerField(
+    #     source='reviews__score__avg', read_only=True)
+    rating = serializers.SerializerMethodField(read_only=True)
+
+    def get_rating(self, instance):
+        rating = instance.reviews.aggregate(
+            avg_rating=Avg('score'))['avg_rating']
+        return rating
 
     class Meta:
         model = Title
@@ -84,13 +92,15 @@ class ReviewsSerializer(serializers.ModelSerializer):
 
     # оставил чобы помнить альтернативу.
     # def validate(self, data):
-    #     request = self.context['request']
-    #     title = self.context['view'].kwargs.get('title_id')
-    #     if request.method == 'POST':
-    #         if Review.objects.filter(author=request.user,
-    #                                  title=title).exists():
-    #             raise serializers.ValidationError(
-    #                 'Ваш отзыв уже есть.')
+    #     if self.context['request'].method == 'POST':
+    #         if Review.objects.filter(
+    #             author=self.context['request'].user,
+    #             title=get_object_or_404(
+    #                 Title,
+    #                 id=self.context['view'].kwargs.get('title_id'),
+    #             ),
+    #         ).exists():
+    #             raise serializers.ValidationError('Ваш отзыв уже есть.')
     #     return data
 
 

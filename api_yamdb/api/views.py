@@ -21,11 +21,15 @@ from .serializers import (CategorySerializer, CommentsSerializer,
 
 class TitleViewSet(viewsets.ModelViewSet):
     """View модели Title."""
-    queryset = Title.objects.all().annotate(
-        Avg('reviews__score')).order_by('-id')
+    queryset = Title.objects.annotate(score_avg=Avg('reviews__score'))
     permission_classes = [IsAdmin]
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitleFilter
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.order_by('-score_avg')
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
